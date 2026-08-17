@@ -1,0 +1,21 @@
+COMO COLOCAR A LOGO DA SUDATI
+==============================
+
+1. Pegue o arquivo da logo da Sudati (de preferência em PNG, com fundo
+   transparente, formato quadrado ou próximo disso).
+
+2. Renomeie o arquivo para exatamente:  logo-sudati.png
+
+3. Coloque esse arquivo aqui DENTRO desta mesma pasta "public"
+   (do lado deste arquivo LEIA-ME.txt).
+
+4. Suba a mudança pro GitHub do jeito de sempre (GitHub Desktop:
+   Commit -> Push). Em alguns minutos o site atualiza sozinho com
+   a logo aparecendo no canto superior esquerdo, no lugar do ícone
+   genérico.
+
+Se o seu arquivo for .svg em vez de .png, funciona também — só
+renomeie para "logo-sudati.svg" no lugar de "logo-sudati.png".
+
+Não precisa mexer em nenhum código. O site já está programado pra
+procurar esse arquivo sozinho.

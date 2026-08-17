@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Building2, Users, Briefcase, ChevronDown, ChevronRight, X, Check, TrendingUp, TrendingDown } from "lucide-react";
+import { Search, Building2, Users, Briefcase, ChevronDown, ChevronRight, X, Check, TrendingUp, TrendingDown, LayoutGrid, FilePlus2, BarChart3, ArrowRight, Download } from "lucide-react";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase.js";
+import * as XLSX from "xlsx";
 import {
   ResponsiveContainer,
   BarChart,
@@ -26,6 +27,60 @@ const REQUESTS_KEY = "quadro-lotacao-sudati-solicitacoes-v3";
 const TIPO_SOLICITACAO = ["Reposição (saída de colaborador)", "Aumento de quadro (posição nova)"];
 const SEED_VAGAS_LOG = [{"id": 0, "mes": "Janeiro", "vaga": "Mecânico de Manutenção III", "setor": "Manutenção Mecânica", "gestor": "Diego Ruher", "motivo": "Substituição Marcelo", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-05", "dataFechamento": "2026-01-22", "tempoFechamento": 17, "dataIntegracao": "2026-01-27", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Dionatan (mecânico I)", "observacao": ""}, {"id": 1, "mes": "Janeiro", "vaga": "Enlonador", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Substituição Bruno", "entrevistados": 2, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-06", "dataFechamento": "2026-01-14", "tempoFechamento": 8, "dataIntegracao": "2026-01-20", "tempoAdmissao": 6, "recrutamento": "RE", "nomeAprovado": "Jaques", "observacao": ""}, {"id": 2, "mes": "Janeiro", "vaga": "Auditor de Ensaios Físicos", "setor": "Qualidade", "gestor": "Cintia Alves", "motivo": "Substituição Nathany", "entrevistados": 1, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "2026-01-19", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "RI", "nomeAprovado": "Yasmim", "observacao": ""}, {"id": 3, "mes": "Janeiro", "vaga": "Auditor de Ensaios Físicos", "setor": "Qualidade", "gestor": "Cintia Alves", "motivo": "Substituição Ana Beatriz", "entrevistados": 4, "mulheres": 3, "situacao": "Fechada", "dataAbertura": "2026-01-19", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "RI/RE", "nomeAprovado": "Emanuel", "observacao": ""}, {"id": 4, "mes": "Janeiro", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Edson Pereira", "motivo": "Substituição Sirlei", "entrevistados": 6, "mulheres": 3, "situacao": "Fechada", "dataAbertura": "2026-01-21", "dataFechamento": "2026-01-22", "tempoFechamento": 1, "dataIntegracao": "2026-01-27", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Evelim", "observacao": ""}, {"id": 5, "mes": "Janeiro", "vaga": "Operador de Papel", "setor": "Acabamento", "gestor": "Edson Pereira", "motivo": "Substituição Gisele", "entrevistados": 6, "mulheres": 3, "situacao": "Fechada", "dataAbertura": "2026-01-21", "dataFechamento": "2026-01-22", "tempoFechamento": 1, "dataIntegracao": "2026-01-27", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Dienefer", "observacao": ""}, {"id": 6, "mes": "Janeiro", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Edson Pereira", "motivo": "Substituição Nicolas", "entrevistados": 5, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-21", "dataFechamento": "2026-01-23", "tempoFechamento": 2, "dataIntegracao": "2026-01-27", "tempoAdmissao": 4, "recrutamento": "RE", "nomeAprovado": "Jean", "observacao": ""}, {"id": 7, "mes": "Janeiro", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Rodrigo Pereira", "motivo": "Substituição Elen", "entrevistados": 5, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-21", "dataFechamento": "2026-01-23", "tempoFechamento": 2, "dataIntegracao": "2026-01-27", "tempoAdmissao": 4, "recrutamento": "RE", "nomeAprovado": "Gabriel", "observacao": ""}, {"id": 8, "mes": "Janeiro", "vaga": "Enlonador", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Substituição José Mateus", "entrevistados": 3, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-22", "dataFechamento": "2026-01-29", "tempoFechamento": 7, "dataIntegracao": "2026-02-03", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Vinicius", "observacao": ""}, {"id": 9, "mes": "Janeiro", "vaga": "Aux. Administrativo", "setor": "Acabamento", "gestor": "Paulo André", "motivo": "Substituição Yasmim", "entrevistados": 2, "mulheres": 2, "situacao": "Fechada", "dataAbertura": "2026-01-13", "dataFechamento": "2026-01-14", "tempoFechamento": 1, "dataIntegracao": "2026-01-20", "tempoAdmissao": 6, "recrutamento": "RE", "nomeAprovado": "Mariana", "observacao": ""}, {"id": 10, "mes": "Janeiro", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Leticia Adriano", "motivo": "Substituição Gabriel Kuster", "entrevistados": 6, "mulheres": 3, "situacao": "Fechada", "dataAbertura": "2026-01-21", "dataFechamento": "2026-01-22", "tempoFechamento": 1, "dataIntegracao": "2026-01-27", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Davi", "observacao": ""}, {"id": 11, "mes": "Janeiro", "vaga": "Mecânico Trainee", "setor": "Manutenção Mecânica", "gestor": "Adenilson Mariano", "motivo": "Substituição Anderson", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-21", "dataFechamento": "2026-01-22", "tempoFechamento": 1, "dataIntegracao": "2026-01-27", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Daniel", "observacao": ""}, {"id": 12, "mes": "Janeiro", "vaga": "Eletricista Trainee", "setor": "Manutenção Elétrica", "gestor": "Adenilson Mariano", "motivo": "Substituição Maria", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-21", "dataFechamento": "2026-01-22", "tempoFechamento": 1, "dataIntegracao": "2026-01-27", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Luciano", "observacao": ""}, {"id": 13, "mes": "Janeiro", "vaga": "Auxiliar de Recebimento", "setor": "Balança", "gestor": "Evandro Quadros", "motivo": "Substituição Bianca", "entrevistados": 2, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "2026-01-16", "dataFechamento": "2026-01-28", "tempoFechamento": 12, "dataIntegracao": "2026-02-03", "tempoAdmissao": 6, "recrutamento": "RE", "nomeAprovado": "Mateus", "observacao": ""}, {"id": 14, "mes": "Janeiro", "vaga": "Estagiário", "setor": "Processos", "gestor": "Lucas Rafael", "motivo": "Substituição Joelma", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-09", "dataFechamento": "2026-02-13", "tempoFechamento": 35, "dataIntegracao": "2026-03-03", "tempoAdmissao": 18, "recrutamento": "E", "nomeAprovado": "Mateus Faria de Sousa", "observacao": ""}, {"id": 15, "mes": "Janeiro", "vaga": "Estagiário", "setor": "Processos", "gestor": "Lucas Rafael", "motivo": "Substituição Rafa", "entrevistados": 1, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "2026-01-09", "dataFechamento": "2026-02-11", "tempoFechamento": 33, "dataIntegracao": "2026-02-24", "tempoAdmissao": 13, "recrutamento": "E", "nomeAprovado": "Giovana Daboie", "observacao": ""}, {"id": 16, "mes": "Janeiro", "vaga": "Operador de Empilhadeira", "setor": "Movimentação Interna", "gestor": "Nara Wolff", "motivo": "Substituição Carol", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-22", "dataFechamento": "2026-02-04", "tempoFechamento": 13, "dataIntegracao": "2026-02-12", "tempoAdmissao": 8, "recrutamento": "E", "nomeAprovado": "Cleiton Nicoletti", "observacao": ""}, {"id": 17, "mes": "Janeiro", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Maicom William", "motivo": "Substituição Caio", "entrevistados": 5, "mulheres": 3, "situacao": "Fechada", "dataAbertura": "2026-01-27", "dataFechamento": "2026-02-11", "tempoFechamento": 15, "dataIntegracao": "2026-02-24", "tempoAdmissao": 13, "recrutamento": "E", "nomeAprovado": "Jefferson Evangelista da Silva", "observacao": ""}, {"id": 18, "mes": "Janeiro", "vaga": "Auxiliar de Operação", "setor": "Preparação de Fibras", "gestor": "Valdemiro Junior", "motivo": "Substituição Bruno", "entrevistados": 3, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-28", "dataFechamento": "2026-02-10", "tempoFechamento": 13, "dataIntegracao": "2026-02-12", "tempoAdmissao": 2, "recrutamento": "E", "nomeAprovado": "Quelven Henrique Fernandes Ortiz da Luz", "observacao": ""}, {"id": 19, "mes": "Fevereiro", "vaga": "Auditor de Ensaios Físicos", "setor": "Qualidade", "gestor": "Cintia Alves", "motivo": "Substituição Marcela", "entrevistados": 3, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "2026-02-02", "dataFechamento": "2026-02-13", "tempoFechamento": 11, "dataIntegracao": "2026-02-19", "tempoAdmissao": 6, "recrutamento": "E", "nomeAprovado": "Ana Carolina Velho", "observacao": ""}, {"id": 20, "mes": "Fevereiro", "vaga": "Auxiliar de Operação", "setor": "Pátio de Madeiras", "gestor": "Everton Pereira Alves", "motivo": "Substituição Adrian", "entrevistados": 3, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-02-03", "dataFechamento": "2026-02-10", "tempoFechamento": 7, "dataIntegracao": "2026-02-12", "tempoAdmissao": 2, "recrutamento": "E", "nomeAprovado": "Jose Luciano Mariano", "observacao": ""}, {"id": 21, "mes": "Fevereiro", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Maicom William", "motivo": "Substituição", "entrevistados": 2, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-02-12", "dataFechamento": "2026-02-13", "tempoFechamento": 1, "dataIntegracao": "2026-02-19", "tempoAdmissao": 6, "recrutamento": "E", "nomeAprovado": "Christian Silva", "observacao": ""}, {"id": 22, "mes": "Fevereiro", "vaga": "Operador de Empilhadeira", "setor": "Movimentação Interna", "gestor": "Nara Wolff", "motivo": "Substituição Mateus Paes", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-02-12", "dataFechamento": "2026-02-13", "tempoFechamento": 1, "dataIntegracao": "2026-02-19", "tempoAdmissao": 6, "recrutamento": "E", "nomeAprovado": "Fabiano Balbinotti", "observacao": ""}, {"id": 23, "mes": "Fevereiro", "vaga": "Auxiliar de Operação", "setor": "Lixadeira", "gestor": "Valdemiro Junior", "motivo": "Substituição Janaina", "entrevistados": 3, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "2026-02-20", "dataFechamento": "2026-02-25", "tempoFechamento": 5, "dataIntegracao": "2026-03-03", "tempoAdmissao": 6, "recrutamento": "E", "nomeAprovado": "Angélica", "observacao": ""}, {"id": 24, "mes": "Março", "vaga": "Auxiliar de Operação", "setor": "Preparação de Fibras", "gestor": "Fernando Moser", "motivo": "Substituição Adair", "entrevistados": 6, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-30", "dataFechamento": "2026-03-31", "tempoFechamento": 1, "dataIntegracao": "2026-04-02", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "Ricardo", "observacao": ""}, {"id": 25, "mes": "Março", "vaga": "Auxiliar de Operação", "setor": "Prensagem", "gestor": "Valdemiro Junior", "motivo": "Substituição Eriki", "entrevistados": 6, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-19", "dataFechamento": "2026-03-30", "tempoFechamento": 11, "dataIntegracao": "2026-04-09", "tempoAdmissao": 10, "recrutamento": "RE", "nomeAprovado": "Gustavo", "observacao": ""}, {"id": 26, "mes": "Março", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Rodrigo Pereira", "motivo": "Substituição Evelim", "entrevistados": 3, "mulheres": 3, "situacao": "Fechada", "dataAbertura": "2026-03-26", "dataFechamento": "2026-03-31", "tempoFechamento": 5, "dataIntegracao": "2026-04-02", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "Carolina", "observacao": ""}, {"id": 27, "mes": "Março", "vaga": "Operador de Papel", "setor": "Acabamento", "gestor": "Rodrigo Pereira", "motivo": "Substituição Alexandra", "entrevistados": 3, "mulheres": 3, "situacao": "Fechada", "dataAbertura": "2026-03-26", "dataFechamento": "2026-03-31", "tempoFechamento": 5, "dataIntegracao": "2026-04-02", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "Ivonete", "observacao": ""}, {"id": 28, "mes": "Março", "vaga": "Auxiliar de Operação", "setor": "Prensagem", "gestor": "Fernando Moser", "motivo": "Substituição Antoni", "entrevistados": 6, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-26", "dataFechamento": "2026-03-31", "tempoFechamento": 5, "dataIntegracao": "2026-04-02", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "Diogo", "observacao": ""}, {"id": 29, "mes": "Março", "vaga": "Operador de Empilhadeira", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Susbtituição Fabiano", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-27", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "Re", "nomeAprovado": "Adair", "observacao": ""}, {"id": 30, "mes": "Março", "vaga": "Operador de Empilhadeira", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Substituição Gilmar", "entrevistados": 2, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-27", "dataFechamento": "2026-04-01", "tempoFechamento": 5, "dataIntegracao": "2026-04-02", "tempoAdmissao": 1, "recrutamento": "RE", "nomeAprovado": "Vandeir", "observacao": ""}, {"id": 31, "mes": "Março", "vaga": "Auxiliar de Operação", "setor": "Lixadeira", "gestor": "Fernando Moser", "motivo": "Substituição Eduardo", "entrevistados": 7, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "2026-03-26", "dataFechamento": "2026-03-31", "tempoFechamento": 5, "dataIntegracao": "2026-04-02", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "William", "observacao": ""}, {"id": 32, "mes": "Janeiro", "vaga": "Eletricista II", "setor": "Manutenção Elétrica", "gestor": "Carlos Wolff", "motivo": "Substituição Roberto", "entrevistados": 6, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-26", "dataFechamento": "2026-03-18", "tempoFechamento": 51, "dataIntegracao": "2026-04-02", "tempoAdmissao": 15, "recrutamento": "RE", "nomeAprovado": "Igor", "observacao": ""}, {"id": 33, "mes": "Janeiro", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Maicom William", "motivo": "Substituição Caio", "entrevistados": 5, "mulheres": 3, "situacao": "Fechada", "dataAbertura": "2026-01-27", "dataFechamento": "2026-03-10", "tempoFechamento": 42, "dataIntegracao": "2026-03-17", "tempoAdmissao": 7, "recrutamento": "Re", "nomeAprovado": "Marcos", "observacao": ""}, {"id": 34, "mes": "Janeiro", "vaga": "Mecânico III", "setor": "Manutenção Mecânica", "gestor": "Diego Ruher", "motivo": "Substituição Valdemir", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-01-30", "dataFechamento": "2026-03-13", "tempoFechamento": 42, "dataIntegracao": "2026-03-17", "tempoAdmissao": 4, "recrutamento": "RE", "nomeAprovado": "Rogério", "observacao": ""}, {"id": 35, "mes": "Fevereiro", "vaga": "Operador de Empilhadeira", "setor": "Movimentação Interna", "gestor": "Nara Wolff", "motivo": "Substituição Hago", "entrevistados": 2, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-02-16", "dataFechamento": "2026-03-09", "tempoFechamento": 21, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "RI", "nomeAprovado": "Bruno", "observacao": ""}, {"id": 36, "mes": "Fevereiro", "vaga": "Auxiliar de Operação", "setor": "Preparação de Fibras", "gestor": "Everton Pereira Alves", "motivo": "Substituição Igor Cassão", "entrevistados": 3, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-02-24", "dataFechamento": "2026-03-03", "tempoFechamento": 7, "dataIntegracao": "2026-03-05", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "Leandro", "observacao": ""}, {"id": 37, "mes": "Março", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Edson Pereira", "motivo": "Substituição Evelim", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-09", "dataFechamento": "2026-03-10", "tempoFechamento": 1, "dataIntegracao": "2026-03-17", "tempoAdmissao": 7, "recrutamento": "RE", "nomeAprovado": "Vinicius", "observacao": ""}, {"id": 38, "mes": "Março", "vaga": "Auxiliar de Operação", "setor": "Preparação de Cavaco", "gestor": "Fernando Moser", "motivo": "Substituição Bruno", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-09", "dataFechamento": "2026-03-12", "tempoFechamento": 3, "dataIntegracao": "2026-03-17", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Carlos", "observacao": ""}, {"id": 39, "mes": "Março", "vaga": "Auxiliar de Operação", "setor": "Preparação de fibras", "gestor": "Valdemiro Junior", "motivo": "Substituição Jackson", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-09", "dataFechamento": "2026-03-10", "tempoFechamento": 1, "dataIntegracao": "2026-03-17", "tempoAdmissao": 7, "recrutamento": "RE", "nomeAprovado": "Ruan", "observacao": ""}, {"id": 40, "mes": "Novembro", "vaga": "Analista de Planejamento", "setor": "PCM", "gestor": "Laura Borges", "motivo": "Substituição Gustavo", "entrevistados": 4, "mulheres": 2, "situacao": "Fechada", "dataAbertura": "2025-11-06", "dataFechamento": "2026-03-06", "tempoFechamento": 120, "dataIntegracao": "2026-03-12", "tempoAdmissao": 6, "recrutamento": "RE", "nomeAprovado": "Vitoria", "observacao": ""}, {"id": 41, "mes": "Março", "vaga": "Supervisor", "setor": "Pátio de Madeiras", "gestor": "Pedro Silva", "motivo": "Substituição Jefferson Barbosa", "entrevistados": 1, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "2026-03-03", "dataFechamento": "2026-03-09", "tempoFechamento": 6, "dataIntegracao": "2026-03-17", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "Eder", "observacao": ""}, {"id": 42, "mes": "Março", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Rodrigo Pereira", "motivo": "Substituição Gabriel", "entrevistados": 6, "mulheres": 2, "situacao": "Fechada", "dataAbertura": "2026-03-19", "dataFechamento": "2026-03-20", "tempoFechamento": 1, "dataIntegracao": "2026-03-24", "tempoAdmissao": 4, "recrutamento": "RE", "nomeAprovado": "Mauricio", "observacao": ""}, {"id": 43, "mes": "Março", "vaga": "Lubrificador Trainee", "setor": "Lubrificação", "gestor": "Laura Borges", "motivo": "Substituição Thiago", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-06", "dataFechamento": "2026-03-18", "tempoFechamento": 12, "dataIntegracao": "2026-03-24", "tempoAdmissao": 6, "recrutamento": "RE", "nomeAprovado": "Fabricio Abreu", "observacao": ""}, {"id": 44, "mes": "Março", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Kelvin Poleza", "motivo": "Substituição Jean Carlos", "entrevistados": 6, "mulheres": 2, "situacao": "Fechada", "dataAbertura": "2026-03-18", "dataFechamento": "2026-03-20", "tempoFechamento": 2, "dataIntegracao": "2026-03-24", "tempoAdmissao": 4, "recrutamento": "RE", "nomeAprovado": "Rafaela", "observacao": ""}, {"id": 45, "mes": "Abril", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Maicom William", "motivo": "Substituição Gabriel Chaves", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-23", "dataFechamento": "2026-04-30", "tempoFechamento": 7, "dataIntegracao": "2026-05-06", "tempoAdmissao": 6, "recrutamento": "RE", "nomeAprovado": "Vitor", "observacao": ""}, {"id": 46, "mes": "Abril", "vaga": "Enlonador", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Substituição Jonas", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-13", "dataFechamento": "2026-04-27", "tempoFechamento": 14, "dataIntegracao": "2026-04-29", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "Uiliam", "observacao": ""}, {"id": 47, "mes": "Março", "vaga": "Mecânico de Manutenção II", "setor": "Manutenção Mecânica", "gestor": "Diego Ruher", "motivo": "Substituição José Fabiano", "entrevistados": 0, "mulheres": 0, "situacao": "Congelada", "dataAbertura": "2026-03-30", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 48, "mes": "Março", "vaga": "Operador de Empilhadeira", "setor": "Movimentação Interna", "gestor": "Nara Wolff", "motivo": "Substituição Gustavo", "entrevistados": 6, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-30", "dataFechamento": "2026-04-15", "tempoFechamento": 16, "dataIntegracao": "2026-04-23", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "Gustavo", "observacao": ""}, {"id": 49, "mes": "Abril", "vaga": "Operador de Empilhadeira", "setor": "Movimentação Interna", "gestor": "Nara Wolff", "motivo": "Substituição Isabel", "entrevistados": 3, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-14", "dataFechamento": "2026-04-15", "tempoFechamento": 1, "dataIntegracao": "2026-04-23", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "Daniel", "observacao": ""}, {"id": 50, "mes": "Abril", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Rodrigo Pereira", "motivo": "Substituição Cristian", "entrevistados": 6, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-07", "dataFechamento": "2026-04-14", "tempoFechamento": 7, "dataIntegracao": "2026-04-23", "tempoAdmissao": 9, "recrutamento": "RE", "nomeAprovado": "Felipe", "observacao": ""}, {"id": 51, "mes": "Fevereiro", "vaga": "Torneiro Mecânico", "setor": "Fabricação", "gestor": "Emerson Fortuna", "motivo": "Substituição Jean Carlos", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-02-18", "dataFechamento": "2026-04-17", "tempoFechamento": 58, "dataIntegracao": "2026-04-23", "tempoAdmissao": 6, "recrutamento": "RE", "nomeAprovado": "Ismael", "observacao": ""}, {"id": 52, "mes": "Março", "vaga": "Auxiliar de Serviços Gerais", "setor": "Fabricação", "gestor": "Emerson Fortuna", "motivo": "Aumento de quadro", "entrevistados": 2, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-30", "dataFechamento": "2026-04-15", "tempoFechamento": 16, "dataIntegracao": "2026-04-23", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "Antonio", "observacao": ""}, {"id": 53, "mes": "Março", "vaga": "Auxiliar de Operação", "setor": "Preparação de Cavaco", "gestor": "Everton Pereira Alves", "motivo": "Substituição William", "entrevistados": 6, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-24", "dataFechamento": "2026-04-07", "tempoFechamento": 14, "dataIntegracao": "2026-04-09", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "Iuri", "observacao": ""}, {"id": 54, "mes": "Março", "vaga": "Enlonador", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Substituição Guilherme Gerber", "entrevistados": 6, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-27", "dataFechamento": "2026-04-07", "tempoFechamento": 11, "dataIntegracao": "2026-04-09", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "Emanuel", "observacao": ""}, {"id": 55, "mes": "Abril", "vaga": "Auxiliar de Operação", "setor": "Prensagem", "gestor": "Everton Pereira Alves", "motivo": "Substituição Lucas", "entrevistados": 6, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-06", "dataFechamento": "2026-04-07", "tempoFechamento": 1, "dataIntegracao": "2026-04-09", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "Mayko", "observacao": ""}, {"id": 56, "mes": "Abril", "vaga": "Auxiliar de Operação", "setor": "Preparação de Fibras", "gestor": "Everton Pereira Alves", "motivo": "Substituição Lucas", "entrevistados": 6, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-09", "dataFechamento": "2026-04-13", "tempoFechamento": 4, "dataIntegracao": "2026-04-16", "tempoAdmissao": 3, "recrutamento": "RE", "nomeAprovado": "Antonio", "observacao": ""}, {"id": 57, "mes": "Abril", "vaga": "Mecânico Autos", "setor": "Autos", "gestor": "Éder Sabino", "motivo": "Substituição Adair", "entrevistados": 2, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-04", "dataFechamento": "2026-04-15", "tempoFechamento": 11, "dataIntegracao": "2026-04-23", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "André", "observacao": ""}, {"id": 58, "mes": "Abril", "vaga": "Operador de Papel", "setor": "Acabamento", "gestor": "Rodrigo Pereira", "motivo": "Substituição Ivonete", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-28", "dataFechamento": "2026-04-28", "tempoFechamento": 0, "dataIntegracao": "2026-04-29", "tempoAdmissao": 1, "recrutamento": "RE", "nomeAprovado": "Amanda", "observacao": ""}, {"id": 59, "mes": "Março", "vaga": "Eletricista III", "setor": "Manutenção Elétrica", "gestor": "Carlos Wolff", "motivo": "Substituição Gabriel", "entrevistados": 6, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-10", "dataFechamento": "2026-05-20", "tempoFechamento": 71, "dataIntegracao": "2026-05-26", "tempoAdmissao": 6, "recrutamento": "RE", "nomeAprovado": "Rafael", "observacao": ""}, {"id": 60, "mes": "Abril", "vaga": "Eletricista III", "setor": "Manutenção Elétrica", "gestor": "Carlos Wolff", "motivo": "Substituição Luis", "entrevistados": 2, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-22", "dataFechamento": "2026-06-01", "tempoFechamento": 40, "dataIntegracao": "2026-06-09", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "Arlen", "observacao": ""}, {"id": 61, "mes": "Abril", "vaga": "Auxiliar de Operação", "setor": "Preparação de Cavaco", "gestor": "Everton Pereira", "motivo": "Substitituição Iure", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-27", "dataFechamento": "2026-05-22", "tempoFechamento": 25, "dataIntegracao": "2026-06-02", "tempoAdmissao": 11, "recrutamento": "RE", "nomeAprovado": "Gladistone", "observacao": ""}, {"id": 62, "mes": "Abril", "vaga": "Auxiliar de Operação", "setor": "Preparação de Fibras", "gestor": "Everton Pereira", "motivo": "Substituição Leandro", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-27", "dataFechamento": "2026-05-30", "tempoFechamento": 33, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "RI", "nomeAprovado": "Leonardo", "observacao": ""}, {"id": 63, "mes": "Maio", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Rodrigo Pereira", "motivo": "Substituição Mauricio", "entrevistados": 3, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-05-13", "dataFechamento": "2026-05-22", "tempoFechamento": 9, "dataIntegracao": "2026-05-26", "tempoAdmissao": 4, "recrutamento": "RE", "nomeAprovado": "José Manoel", "observacao": ""}, {"id": 64, "mes": "Maio", "vaga": "Enlonador", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Substituição Jaques", "entrevistados": 3, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-05-13", "dataFechamento": "2026-05-15", "tempoFechamento": 2, "dataIntegracao": "2026-05-19", "tempoAdmissao": 4, "recrutamento": "RE", "nomeAprovado": "Vitor", "observacao": ""}, {"id": 65, "mes": "Março", "vaga": "Auxiliar de Serviços Gerais", "setor": "Fabricação", "gestor": "Emerson Fortuna", "motivo": "Aumento de quadro", "entrevistados": 2, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-03-30", "dataFechamento": "2026-05-05", "tempoFechamento": 36, "dataIntegracao": "2026-05-12", "tempoAdmissao": 7, "recrutamento": "RE", "nomeAprovado": "Cicero", "observacao": ""}, {"id": 66, "mes": "Abril", "vaga": "Auxiliar de Operação", "setor": "Preparação de Fibras", "gestor": "Fernando Moser", "motivo": "Substituição Ricardo", "entrevistados": 8, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-06", "dataFechamento": "2026-05-07", "tempoFechamento": 31, "dataIntegracao": "2026-05-12", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Eltom", "observacao": ""}, {"id": 67, "mes": "Abril", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Maicom William", "motivo": "Substituição Rafael", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-06", "dataFechamento": "2026-05-07", "tempoFechamento": 31, "dataIntegracao": "2026-05-12", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Braian", "observacao": ""}, {"id": 68, "mes": "Abril", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Kelvin Poleza", "motivo": "Substituição Felipe", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-30", "dataFechamento": "2026-05-07", "tempoFechamento": 7, "dataIntegracao": "2026-05-19", "tempoAdmissao": 12, "recrutamento": "RE", "nomeAprovado": "Gabriel", "observacao": ""}, {"id": 69, "mes": "Abril", "vaga": "Auxiliar de Operação", "setor": "Prensagem", "gestor": "Fernando Moser", "motivo": "Substituição Cleison", "entrevistados": 5, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-29", "dataFechamento": "2026-05-04", "tempoFechamento": 5, "dataIntegracao": "2026-05-06", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "Vitor", "observacao": ""}, {"id": 70, "mes": "Abril", "vaga": "Auxiliar de Operação", "setor": "Preparação de Cavaco", "gestor": "Valdemiro Junior", "motivo": "Substituição Junior", "entrevistados": 5, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-29", "dataFechamento": "2026-05-04", "tempoFechamento": 5, "dataIntegracao": "2026-05-06", "tempoAdmissao": 2, "recrutamento": "RE", "nomeAprovado": "Leonardo", "observacao": ""}, {"id": 71, "mes": "", "vaga": "Assistente de Vendas", "setor": "Vendas", "gestor": "Jacqueline Akemi", "motivo": "Aumento de quadro", "entrevistados": 1, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "", "dataFechamento": "2026-05-12", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "Erica", "observacao": ""}, {"id": 72, "mes": "Maio", "vaga": "Auxiliar de Operação", "setor": "Lixadeira", "gestor": "Valdemiro Junior", "motivo": "Substituição Angélica", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-05-07", "dataFechamento": "2026-05-15", "tempoFechamento": 8, "dataIntegracao": "2026-05-19", "tempoAdmissao": 4, "recrutamento": "RE", "nomeAprovado": "Tiago", "observacao": ""}, {"id": 73, "mes": "Maio", "vaga": "Operador de Papel", "setor": "Acabamento", "gestor": "Rodrigo Pereira", "motivo": "Substituição Jaine", "entrevistados": 3, "mulheres": 3, "situacao": "Fechada", "dataAbertura": "2026-05-14", "dataFechamento": "2026-05-15", "tempoFechamento": 1, "dataIntegracao": "2026-05-19", "tempoAdmissao": 4, "recrutamento": "RE", "nomeAprovado": "Ariane", "observacao": ""}, {"id": 74, "mes": "Maio", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Kelvin Poleza", "motivo": "Substituição Carolina", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-05-21", "dataFechamento": "2026-05-22", "tempoFechamento": 1, "dataIntegracao": "2026-05-26", "tempoAdmissao": 4, "recrutamento": "RE", "nomeAprovado": "Carlos", "observacao": ""}, {"id": 75, "mes": "Maio", "vaga": "Enlonador", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Substituição Uilliam", "entrevistados": 2, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-05-18", "dataFechamento": "2026-05-29", "tempoFechamento": 11, "dataIntegracao": "2026-06-02", "tempoAdmissao": 4, "recrutamento": "RE", "nomeAprovado": "Gabriel", "observacao": ""}, {"id": 76, "mes": "Junho", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Rodrigo Pereira", "motivo": "Substituição José Manoel", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-05", "dataFechamento": "2026-06-18", "tempoFechamento": 13, "dataIntegracao": "2026-06-23", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Cleiton", "observacao": ""}, {"id": 77, "mes": "Maio", "vaga": "Operador de Lixadeira", "setor": "Lixadeira", "gestor": "Valdemiro Jr", "motivo": "Substituição Fernando", "entrevistados": 7, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "2026-05-25", "dataFechamento": "2026-06-10", "tempoFechamento": 16, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "RI", "nomeAprovado": "Vinicius Muller", "observacao": ""}, {"id": 78, "mes": "Junho", "vaga": "Classificador", "setor": "Lixadeira", "gestor": "Fernando Moser", "motivo": "Substituição Vinicius", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-10", "dataFechamento": "2026-06-10", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "RI", "nomeAprovado": "William Leite", "observacao": ""}, {"id": 79, "mes": "Junho", "vaga": "Auxiliar de Operação", "setor": "Lixadeira", "gestor": "Fernando Moser", "motivo": "Substituição Wiliam Leite", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-10", "dataFechamento": "2026-06-10", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "RI", "nomeAprovado": "Ruan Ribeiro", "observacao": ""}, {"id": 80, "mes": "Junho", "vaga": "Enlonador", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Substituição Emanuel", "entrevistados": 5, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-01", "dataFechamento": "2026-06-03", "tempoFechamento": 2, "dataIntegracao": "2026-06-09", "tempoAdmissao": 6, "recrutamento": "RE", "nomeAprovado": "Edson", "observacao": ""}, {"id": 81, "mes": "Junho", "vaga": "Mecânico de Manutenção I", "setor": "Manutenção Mecânica", "gestor": "Diego Ruher", "motivo": "Substituição Rogério", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-02", "dataFechamento": "2026-06-10", "tempoFechamento": 8, "dataIntegracao": "2026-06-16", "tempoAdmissao": 6, "recrutamento": "RE", "nomeAprovado": "Maicon", "observacao": ""}, {"id": 82, "mes": "Junho", "vaga": "Auditor de Ensaios Físicos", "setor": "Qualidade", "gestor": "Cintia Alves", "motivo": "Substituição Daniele P", "entrevistados": 4, "mulheres": 2, "situacao": "Fechada", "dataAbertura": "2026-06-01", "dataFechamento": "2026-06-09", "tempoFechamento": 8, "dataIntegracao": "2026-06-16", "tempoAdmissao": 7, "recrutamento": "RE", "nomeAprovado": "Leandro", "observacao": ""}, {"id": 83, "mes": "Junho", "vaga": "Auditor de Ensaios Físicos", "setor": "Qualidade", "gestor": "Cintia Alves", "motivo": "Substituição Daniele P", "entrevistados": 4, "mulheres": 2, "situacao": "Fechada", "dataAbertura": "2026-06-01", "dataFechamento": "2026-06-09", "tempoFechamento": 8, "dataIntegracao": "2026-06-16", "tempoAdmissao": 7, "recrutamento": "RE", "nomeAprovado": "Vitor", "observacao": ""}, {"id": 84, "mes": "Junho", "vaga": "Auxiliar de Operação", "setor": "Preparação de Cavaco", "gestor": "Valdemiro Jr", "motivo": "Substituição Leonardo", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-02", "dataFechamento": "2026-06-18", "tempoFechamento": 16, "dataIntegracao": "2026-06-23", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Roberto", "observacao": ""}, {"id": 85, "mes": "Junho", "vaga": "Mecânico de Manutenção I", "setor": "Manutenção Mecânica", "gestor": "Diego Ruher", "motivo": "Substituição José Fabiano", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-02", "dataFechamento": "2026-06-15", "tempoFechamento": 13, "dataIntegracao": "2026-06-23", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "Igor José", "observacao": ""}, {"id": 86, "mes": "Junho", "vaga": "Operador de Papel", "setor": "Acabamento", "gestor": "Maicom William", "motivo": "Substituição Tamires", "entrevistados": 4, "mulheres": 4, "situacao": "Fechada", "dataAbertura": "2026-06-18", "dataFechamento": "2026-06-18", "tempoFechamento": 0, "dataIntegracao": "2026-06-23", "tempoAdmissao": 5, "recrutamento": "RE", "nomeAprovado": "Rafaela", "observacao": ""}, {"id": 87, "mes": "Maio", "vaga": "Operador de Sala de Controle", "setor": "Prensagem", "gestor": "Marielle Muniz", "motivo": "Substituição Jonatan", "entrevistados": 7, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "2026-05-25", "dataFechamento": "2026-06-29", "tempoFechamento": 35, "dataIntegracao": "2026-07-07", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "Carlos Andrei", "observacao": ""}, {"id": 88, "mes": "Junho", "vaga": "Auxiliar de Operação", "setor": "Prensagem", "gestor": "Fernando Moser", "motivo": "Substituição Diogo", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-23", "dataFechamento": "2026-06-29", "tempoFechamento": 6, "dataIntegracao": "2026-07-07", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "Cristian", "observacao": ""}, {"id": 89, "mes": "Junho", "vaga": "Auxiliar de Operação", "setor": "Preparação de Fibras", "gestor": "Fernando Moser", "motivo": "Substituição Elton", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-26", "dataFechamento": "2026-06-29", "tempoFechamento": 3, "dataIntegracao": "2026-07-07", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "Caue", "observacao": ""}, {"id": 90, "mes": "Junho", "vaga": "Auxiliar de Operação", "setor": "Preparação de Fibras", "gestor": "Fernando Moser", "motivo": "Substituição Ruan Ribeiro", "entrevistados": 5, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-15", "dataFechamento": "2026-06-29", "tempoFechamento": 14, "dataIntegracao": "2026-07-07", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "Igor Medeiros", "observacao": ""}, {"id": 91, "mes": "Junho", "vaga": "Operador de Empilhadeira", "setor": "Movimentação Interna", "gestor": "Nara Wolff", "motivo": "Substituição Cleiton N.", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-10", "dataFechamento": "2026-06-23", "tempoFechamento": 13, "dataIntegracao": "2026-07-07", "tempoAdmissao": 14, "recrutamento": "RE", "nomeAprovado": "Matheus", "observacao": ""}, {"id": 92, "mes": "Junho", "vaga": "Enlonador", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Substituição Vitor Manoel", "entrevistados": 5, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-01", "dataFechamento": "2026-06-29", "tempoFechamento": 28, "dataIntegracao": "2026-07-07", "tempoAdmissao": 8, "recrutamento": "RE", "nomeAprovado": "Guilherme", "observacao": ""}, {"id": 93, "mes": "Abril", "vaga": "Eletricista III", "setor": "Manutenção Elétrica", "gestor": "Carlos Wolff", "motivo": "Substituição Luis", "entrevistados": 3, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-04-22", "dataFechamento": "2026-06-23", "tempoFechamento": 62, "dataIntegracao": "2026-07-07", "tempoAdmissao": 14, "recrutamento": "RE", "nomeAprovado": "Igor José", "observacao": ""}, {"id": 94, "mes": "Novembro", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Maicom William", "motivo": "Substituição Graciele", "entrevistados": 0, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-11-18", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "RI", "nomeAprovado": "Elton", "observacao": ""}, {"id": 95, "mes": "Junho", "vaga": "Eletricista III", "setor": "Manutenção Elétrica", "gestor": "Carlos Wolff", "motivo": "Substituição Irani", "entrevistados": 0, "mulheres": 0, "situacao": "Cancelada", "dataAbertura": "2026-06-29", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 96, "mes": "Junho", "vaga": "Eletricista II", "setor": "Manutenção Elétrica", "gestor": "Carlos Wolff", "motivo": "Substiuição Igor Matheus", "entrevistados": 0, "mulheres": 0, "situacao": "Cancelada", "dataAbertura": "2026-06-30", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 97, "mes": "Julho", "vaga": "Operador de Papel", "setor": "Acabamento", "gestor": "Maicom William", "motivo": "Substituição Rafaela", "entrevistados": 3, "mulheres": 3, "situacao": "Fechada", "dataAbertura": "2026-07-28", "dataFechamento": "2026-07-30", "tempoFechamento": 2, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 98, "mes": "Junho", "vaga": "Auxiliar de Operação", "setor": "Preparação de Cavaco", "gestor": "Valdemiro Jr", "motivo": "Substituição Roberto", "entrevistados": 0, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-24", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 99, "mes": "Julho", "vaga": "Op. De Lixadeira", "setor": "Lixadeira", "gestor": "Valdemiro Jr", "motivo": "Substituição Elinton", "entrevistados": 2, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "2026-07-09", "dataFechamento": "2026-07-24", "tempoFechamento": 15, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 100, "mes": "Junho", "vaga": "Auxiliar de Recebimento", "setor": "Balança", "gestor": "Evandro Quadro", "motivo": "Substituição Mateus", "entrevistados": 5, "mulheres": 3, "situacao": "Fechada", "dataAbertura": "2026-06-11", "dataFechamento": "2026-07-10", "tempoFechamento": 29, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 101, "mes": "Julho", "vaga": "Mecanico Especializado", "setor": "Manutenção Mecânica", "gestor": "Diego Ruher", "motivo": "Substituição Alessandro", "entrevistados": 0, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-07-07", "dataFechamento": "2026-07-09", "tempoFechamento": 2, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 102, "mes": "Junho", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Rodrigo Pereira", "motivo": "Mauricio", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-06-24", "dataFechamento": "2026-07-03", "tempoFechamento": 9, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 103, "mes": "Maio", "vaga": "Assistente de Vendas", "setor": "Vendas", "gestor": "Camilla", "motivo": "Substituição Carol", "entrevistados": 1, "mulheres": 1, "situacao": "Fechada", "dataAbertura": "2026-05-07", "dataFechamento": "2026-07-08", "tempoFechamento": 62, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 104, "mes": "Novembro", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Maicom William", "motivo": "Substituição Graciele", "entrevistados": 0, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-11-18", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 105, "mes": "Julho", "vaga": "Auxiliar de Operação", "setor": "Preparação de Fibras", "gestor": "Fernando Moser", "motivo": "Substituição Elton", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-07-01", "dataFechamento": "2026-07-01", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 106, "mes": "Julho", "vaga": "Mecânico Trainee", "setor": "Fabricação", "gestor": "Emerson Fortuna", "motivo": "Substituição Jessica", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-07-10", "dataFechamento": "2026-07-14", "tempoFechamento": 4, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 107, "mes": "Julho", "vaga": "Mecânico Trainee", "setor": "Manutenção Mecânica", "gestor": "Diego Ruher", "motivo": "Substituição Daniel", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-07-10", "dataFechamento": "2026-07-22", "tempoFechamento": 12, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 108, "mes": "Julho", "vaga": "Operador de Papel", "setor": "Acabamento", "gestor": "Rodrigo Pereira", "motivo": "Substituição Mariana", "entrevistados": 2, "mulheres": 2, "situacao": "Fechada", "dataAbertura": "2026-07-10", "dataFechamento": "2026-07-15", "tempoFechamento": 5, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 109, "mes": "Julho", "vaga": "Aux. Expedição - temporário", "setor": "Expedição", "gestor": "Nara Wolf", "motivo": "Substituição Luigi", "entrevistados": 0, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-07-10", "dataFechamento": "2026-07-10", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 110, "mes": "Junho", "vaga": "Mecânico I", "setor": "Fabricação", "gestor": "Emerson Fortuna", "motivo": "Substituição Lauri", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-06-19", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 111, "mes": "Agosto", "vaga": "Mecânico de Manutenção I", "setor": "Manutenção Mecânica", "gestor": "Diego Ruher", "motivo": "Substituição Dionatan", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-08-12", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 112, "mes": "Julho", "vaga": "Mecânico de Manutenção III", "setor": "Manutenção Mecânica", "gestor": "Diego Ruher", "motivo": "Substituição Lucas", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-07-07", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 113, "mes": "Julho", "vaga": "Mecânico Trainee", "setor": "Manutenção Mecânica", "gestor": "Diego Ruher", "motivo": "Substituição Jéssica", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-07-10", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 114, "mes": "Julho", "vaga": "Técnico de Automação II", "setor": "Manutenção Elétrica", "gestor": "Carlos Wolff", "motivo": "Aumento de quadro", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-07-29", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 115, "mes": "Agosto", "vaga": "Auxiliar de Operação", "setor": "Acabamento", "gestor": "Maicom William", "motivo": "Substituição Marcos", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-08-06", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 116, "mes": "Agosto", "vaga": "Auxiliar de Operação", "setor": "Prensagem", "gestor": "Valdemiro Junior", "motivo": "Substituição Vitor", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-08-06", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 117, "mes": "Agosto", "vaga": "Enlonador", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Substituição Gabriel", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-08-06", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 118, "mes": "Agosto", "vaga": "Enlonador", "setor": "Expedição", "gestor": "Nara Wolff", "motivo": "Aumento de quadro", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-08-06", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 119, "mes": "Agosto", "vaga": "Operador de Máquinas Pesadas I", "setor": "Pátio de Madeiras", "gestor": "Éder Sabino", "motivo": "Substituição Silvio", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-08-10", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 120, "mes": "Agosto", "vaga": "Mecânico de máquinas pesadas 1", "setor": "Autos", "gestor": "Éder Sabino", "motivo": "Substituição Iago", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-08-10", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 121, "mes": "Agosto", "vaga": "Planejador de Manutenção", "setor": "PCM", "gestor": "Laura Farias", "motivo": "Substituição Vitoria", "entrevistados": 0, "mulheres": 0, "situacao": "Aberta", "dataAbertura": "2026-08-10", "dataFechamento": "", "tempoFechamento": 0, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "", "observacao": ""}, {"id": 122, "mes": "Abril", "vaga": "Almoxarife", "setor": "Almoxarifado", "gestor": "Alex Silva", "motivo": "Aumento de quadro", "entrevistados": 11, "mulheres": 4, "situacao": "Fechada", "dataAbertura": "2026-04-14", "dataFechamento": "2026-08-05", "tempoFechamento": 113, "dataIntegracao": "2026-08-11", "tempoAdmissao": 6, "recrutamento": "RE", "nomeAprovado": "Eduardo", "observacao": ""}, {"id": 123, "mes": "Julho", "vaga": "Lubrificador Trainee", "setor": "Lubrificação", "gestor": "Laura Borges", "motivo": "Substituição Fabricio", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-07-16", "dataFechamento": "2026-08-06", "tempoFechamento": 21, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "", "nomeAprovado": "Vitor", "observacao": ""}, {"id": 124, "mes": "Julho", "vaga": "Técnico de Automação II", "setor": "Manutenção Elétrica", "gestor": "Carlos Wolff", "motivo": "Aumento de quadro", "entrevistados": 3, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-07-29", "dataFechamento": "2026-08-11", "tempoFechamento": 13, "dataIntegracao": "2026-09-08", "tempoAdmissao": 28, "recrutamento": "RE", "nomeAprovado": "Leonardo", "observacao": ""}, {"id": 125, "mes": "Julho", "vaga": "Auxiliar de Operação", "setor": "Lixadeira", "gestor": "Fernando Moser", "motivo": "Substituição Vinicius", "entrevistados": 4, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-07-30", "dataFechamento": "2026-08-03", "tempoFechamento": 4, "dataIntegracao": "2026-08-06", "tempoAdmissao": 3, "recrutamento": "RE", "nomeAprovado": "Quelvin", "observacao": ""}, {"id": 126, "mes": "Julho", "vaga": "Operador de Máquinas Pesadas I", "setor": "Pátio de Madeiras", "gestor": "Éder Sabino", "motivo": "Substituição Gabriel", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-07-30", "dataFechamento": "2026-07-30", "tempoFechamento": 0, "dataIntegracao": "2026-08-06", "tempoAdmissao": 7, "recrutamento": "RE", "nomeAprovado": "Silvio", "observacao": ""}, {"id": 127, "mes": "Agosto", "vaga": "Almoxarife", "setor": "Almoxarifado", "gestor": "Alex Silva", "motivo": "Substituição João", "entrevistados": 1, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "2026-08-03", "dataFechamento": "2026-08-05", "tempoFechamento": 2, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "RI", "nomeAprovado": "Marcos", "observacao": ""}, {"id": 128, "mes": "", "vaga": "Técnico de Automação I", "setor": "Manutenção Elétrica", "gestor": "Carlos Wolff", "motivo": "Substituição Rodirgo", "entrevistados": 0, "mulheres": 0, "situacao": "Fechada", "dataAbertura": "", "dataFechamento": "2026-08-11", "tempoFechamento": 46245, "dataIntegracao": "", "tempoAdmissao": 0, "recrutamento": "RE", "nomeAprovado": "Marlon", "observacao": "Vaga sigilosa"}];
 const VAGAS_LOG_KEY = "quadro-lotacao-sudati-vagas-log-v2";
+
+function exportBackupToExcel(data, vagasLog, requests) {
+  const wb = XLSX.utils.book_new();
+
+  const quadroRows = data.map((r) => ({
+    Área: r.area,
+    Subárea: r.subarea || "",
+    Função: r.funcao,
+    Autorizadas: r.autorizadas,
+    Lotadas: r.lotadas,
+    Afastados: r.afastados,
+    Terceiro: r.terceiro,
+    "Vagas em aberto": vagasAbertas(r),
+    Motivo: r.motivo || "",
+    Ativo: r.ativo === false ? "Não" : "Sim",
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(quadroRows), "Quadro de Lotação");
+
+  const vagasRows = vagasLog.map((v) => ({
+    Mês: v.mes,
+    Vaga: v.vaga,
+    Setor: v.setor,
+    Gestor: v.gestor || "",
+    Motivo: v.motivo || "",
+    Entrevistados: v.entrevistados || 0,
+    Mulheres: v.mulheres || 0,
+    Situação: v.situacao,
+    "Data abertura": v.dataAbertura || "",
+    "Data fechamento": v.dataFechamento || "",
+    "Tempo fechamento (dias)": v.tempoFechamento || "",
+    Integração: v.dataIntegracao || "",
+    "Tempo admissão (dias)": v.tempoAdmissao || "",
+    Recrutamento: v.recrutamento || "",
+    "Nome aprovado": v.nomeAprovado || "",
+    Observação: v.observacao || "",
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(vagasRows), "Vagas");
+
+  const solicitacoesRows = requests.map((r) => ({
+    Área: r.area,
+    Função: r.funcao,
+    Tipo: r.tipo,
+    Solicitante: r.solicitante || "",
+    "Colaborador substituído": r.colaboradorSubstituido || "",
+    Justificativa: r.justificativa || "",
+    "Data abertura": r.dataAbertura || "",
+    Status: r.status,
+    "Criada em": r.criadaEm || "",
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(solicitacoesRows), "Solicitações");
+
+  const hoje = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `backup-quadro-lotacao-sudati-${hoje}.xlsx`);
+}
 
 function vagasAbertas(row) {
   return Math.max(0, row.autorizadas - row.lotadas - row.terceiro);
@@ -281,7 +336,7 @@ export default function QuadroLotacao() {
         vaga: req.funcao,
         setor: req.area,
         gestor: req.solicitante || "",
-        motivo: req.justificativa || "",
+        motivo: req.colaboradorSubstituido ? `Substituição de ${req.colaboradorSubstituido}` : req.justificativa || "",
         entrevistados: 0,
         mulheres: 0,
         situacao: "Aberta",
@@ -302,10 +357,10 @@ export default function QuadroLotacao() {
   };
 
   useEffect(() => {
-    const adminTabs = ["dashboard", "lotacao", "organograma", "vagas", "solicitacoes"];
-    const gestorTabs = ["meusetor", "vagasgestor", "abrirvaga"];
-    if (role === "admin" && !adminTabs.includes(tab)) setTab("dashboard");
-    if (role === "gestor" && !gestorTabs.includes(tab)) setTab("meusetor");
+    const adminTabs = ["dashboard", "lotacao", "organograma", "vagas", "indicadores", "solicitacoes"];
+    const gestorTabs = ["gestorhome", "meusetor", "vagasgestor", "abrirvaga", "indicadoresgestor"];
+    if (role === "admin" && !adminTabs.includes(tab)) setTab("indicadores");
+    if (role === "gestor" && !gestorTabs.includes(tab)) setTab("gestorhome");
   }, [role]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const areas = useMemo(() => {
@@ -362,6 +417,11 @@ export default function QuadroLotacao() {
   const gestorRows = useMemo(() => data.filter((r) => r.area === gestorArea), [data, gestorArea]);
   const gestorOpen = useMemo(() => gestorRows.filter((r) => vagasAbertas(r) > 0), [gestorRows]);
   const gestorRequests = useMemo(() => requests.filter((r) => r.area === gestorArea), [requests, gestorArea]);
+  const vagasLogGestor = useMemo(() => {
+    if (!gestorArea) return [];
+    const alvo = gestorArea.toLowerCase();
+    return vagasLog.filter((v) => v.setor && (v.setor.toLowerCase().includes(alvo) || alvo.includes(v.setor.toLowerCase())));
+  }, [vagasLog, gestorArea]);
 
   if (!ready || authChecking) {
     return (
@@ -382,8 +442,6 @@ export default function QuadroLotacao() {
         setRole={setRole}
         gestorArea={gestorArea}
         setGestorArea={setGestorArea}
-        gestorNome={gestorNome}
-        setGestorNome={setGestorNome}
         areas={areas}
         passwordModal={passwordModal}
         setPasswordModal={setPasswordModal}
@@ -396,8 +454,11 @@ export default function QuadroLotacao() {
         setPasswordVisible={setPasswordVisible}
         tryUnlockAdmin={tryUnlockAdmin}
         logoutAdmin={logoutAdmin}
+        onExport={() => exportBackupToExcel(data, vagasLog, requests)}
       />
-      <TabBar tab={tab} setTab={setTab} counts={{ vagas: vagasAtivasCount, areas: areas.length, pendentes: pendingCount }} role={role} />
+      {!(role === "gestor" && (!gestorArea || tab === "gestorhome")) && (
+        <TabBar tab={tab} setTab={setTab} counts={{ vagas: vagasAtivasCount, areas: areas.length, pendentes: pendingCount }} role={role} />
+      )}
 
       <div style={styles.content}>
         {role === "admin" && tab === "dashboard" && <Dashboard totals={totals} byArea={byArea} />}
@@ -426,6 +487,7 @@ export default function QuadroLotacao() {
             areas={areas}
             expandedAreas={expandedAreas}
             toggleArea={toggleArea}
+            updateRow={updateRow}
           />
         )}
 
@@ -443,16 +505,24 @@ export default function QuadroLotacao() {
           </div>
         )}
 
+        {role === "gestor" && gestorArea && tab === "gestorhome" && (
+          <GestorHome area={gestorArea} setTab={setTab} vagasCount={gestorOpen.length} />
+        )}
+
         {role === "gestor" && gestorArea && tab === "meusetor" && (
           <MeuSetor area={gestorArea} rows={gestorRows} />
         )}
 
         {role === "gestor" && gestorArea && tab === "vagasgestor" && (
-          <VagasGestor rows={gestorOpen} updateRow={updateRow} />
+          <VagasGestor rows={gestorOpen} />
         )}
 
         {role === "gestor" && gestorArea && tab === "abrirvaga" && (
-          <AbrirVaga area={gestorArea} rows={gestorRows} requests={gestorRequests} submitRequest={submitRequest} gestorNome={gestorNome} />
+          <AbrirVaga area={gestorArea} rows={gestorRows} requests={gestorRequests} submitRequest={submitRequest} gestorNome={gestorNome} setGestorNome={setGestorNome} />
+        )}
+
+        {role === "gestor" && gestorArea && tab === "indicadoresgestor" && (
+          <Indicadores vagasLog={vagasLogGestor} />
         )}
       </div>
     </div>
@@ -461,20 +531,20 @@ export default function QuadroLotacao() {
 
 // ---------- design tokens ----------
 const C = {
-  bg: "#F8F5F0",
+  bg: "#EFF3F8",
   surface: "#FFFFFF",
-  ink: "#2B2622",
-  wood: "#3A322C",
-  woodDark: "#4A3B2E",
-  slate: "#6B6459",
-  slateLight: "#A39A8C",
-  signal: "#BE5B36",
-  signalBg: "#F7E7DE",
-  moss: "#6C8563",
-  mossBg: "#EAF0E6",
-  line: "#E6DFD3",
-  amber: "#B78A45",
-  amberBg: "#F8EFDC",
+  ink: "#16232F",
+  wood: "#2E5C82",
+  woodDark: "#16324A",
+  slate: "#4E6478",
+  slateLight: "#8598AC",
+  signal: "#1D6FD1",
+  signalBg: "#E1EDFB",
+  moss: "#0F8A87",
+  mossBg: "#E1F3F1",
+  line: "#D9E2EC",
+  amber: "#5B6FA8",
+  amberBg: "#E7E9F7",
 };
 const F = {
   display: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif",
@@ -495,6 +565,7 @@ const globalCss = `
   .qlt-pill:hover { border-color: ${C.signal} !important; }
   .qlt-row:hover { background: ${C.bg}; }
   .qlt-editable:hover { background: ${C.bg}; }
+  .qlt-card-btn:hover { border-color: ${C.signal} !important; box-shadow: 0 4px 14px rgba(22,50,74,0.12) !important; transform: translateY(-2px); }
   @media (max-width: 640px) {
     .qlt-hide-mobile { display: none !important; }
   }
@@ -528,8 +599,6 @@ function Header({
   setRole,
   gestorArea,
   setGestorArea,
-  gestorNome,
-  setGestorNome,
   areas,
   passwordModal,
   setPasswordModal,
@@ -542,12 +611,13 @@ function Header({
   setPasswordVisible,
   tryUnlockAdmin,
   logoutAdmin,
+  onExport,
 }) {
   return (
     <div
       style={{
         background: C.woodDark,
-        color: "#F5F0E8",
+        color: "#EAF1FA",
         padding: "18px 24px",
         borderBottom: `4px solid ${C.signal}`,
         boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
@@ -555,17 +625,41 @@ function Header({
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-        <div>
-          <div style={{ fontFamily: F.display, fontWeight: 700, fontSize: 20, letterSpacing: "-0.01em" }}>
-            Quadro de Lotação — Sudati
-          </div>
-          <div style={{ fontSize: 12.5, color: "#C9BEAC", marginTop: 2 }}>
-            Lotação · Organograma · Vagas em aberto — dados integrados
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <LogoMark />
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#7FA5C9" }}>
+              Sudati MDF
+            </div>
+            <div style={{ fontFamily: F.display, fontWeight: 700, fontSize: 19, letterSpacing: "-0.01em", lineHeight: 1.15 }}>
+              Portal de Gestão de Pessoas
+            </div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <StatChip label="Ocupação" value={`${totals.pct}%`} />
           <StatChip label="Vagas abertas" value={vagasAtivasCount} accent />
+          {role === "admin" && (
+            <button
+              onClick={onExport}
+              title="Baixar todos os dados em Excel"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "7px 12px",
+                borderRadius: 20,
+                border: "1px solid #2E4A64",
+                background: "transparent",
+                color: "#EAF1FA",
+                fontSize: 12.5,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              <Download size={14} /> Exportar Excel
+            </button>
+          )}
           <SaveIndicator state={saveState} />
         </div>
       </div>
@@ -575,7 +669,7 @@ function Header({
         {role === "admin" && (
           <button
             onClick={logoutAdmin}
-            style={{ padding: "5px 12px", borderRadius: 20, border: "1px solid #5C4F42", background: "transparent", color: "#C9BEAC", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
+            style={{ padding: "5px 12px", borderRadius: 20, border: "1px solid #2E4A64", background: "transparent", color: "#9FB6CE", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
           >
             Sair
           </button>
@@ -588,9 +682,9 @@ function Header({
               style={{
                 padding: "5px 10px",
                 borderRadius: 20,
-                border: "1px solid #5C4F42",
-                background: "#3E342C",
-                color: "#F5F0E8",
+                border: "1px solid #2E4A64",
+                background: "#1E3A54",
+                color: "#EAF1FA",
                 fontSize: 12.5,
               }}
             >
@@ -601,20 +695,6 @@ function Header({
                 </option>
               ))}
             </select>
-            <input
-              value={gestorNome}
-              onChange={(e) => setGestorNome(e.target.value)}
-              placeholder="Seu nome"
-              style={{
-                padding: "5px 10px",
-                borderRadius: 20,
-                border: "1px solid #5C4F42",
-                background: "#3E342C",
-                color: "#F5F0E8",
-                fontSize: 12.5,
-                width: 130,
-              }}
-            />
           </>
         )}
       </div>
@@ -680,6 +760,44 @@ function Header({
   );
 }
 
+function LogoMark() {
+  const [attempt, setAttempt] = useState(0); // 0 = .png, 1 = .svg, 2 = ícone padrão
+  const sources = ["/logo-sudati.png", "/logo-sudati.svg"];
+
+  if (attempt >= sources.length) {
+    return (
+      <div
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: 10,
+          background: C.signal,
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="5" r="2.6" fill="#fff" />
+          <circle cx="5" cy="19" r="2.6" fill="#fff" />
+          <circle cx="19" cy="19" r="2.6" fill="#fff" />
+          <path d="M12 7.6V12M12 12L5 16.6M12 12L19 16.6" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={sources[attempt]}
+      alt="Sudati"
+      onError={() => setAttempt((a) => a + 1)}
+      style={{ width: 42, height: 42, borderRadius: 10, objectFit: "contain", flexShrink: 0 }}
+    />
+  );
+}
+
 function RolePill({ active, onClick, label }) {
   return (
     <button
@@ -688,7 +806,7 @@ function RolePill({ active, onClick, label }) {
       style={{
         padding: "5px 12px",
         borderRadius: 20,
-        border: `1px solid ${active ? C.signal : "#5C4F42"}`,
+        border: `1px solid ${active ? C.signal : "#2E4A64"}`,
         background: active ? C.signal : "transparent",
         color: "#fff",
         fontSize: 12.5,
@@ -704,13 +822,13 @@ function RolePill({ active, onClick, label }) {
 function StatChip({ label, value, accent }) {
   return (
     <div style={{ textAlign: "right" }}>
-      <div style={{ fontSize: 10.5, color: "#C9BEAC", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
+      <div style={{ fontSize: 10.5, color: "#9FB6CE", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
       <div
         style={{
           fontFamily: F.mono,
           fontWeight: 700,
           fontSize: 20,
-          color: accent ? "#F3B892" : "#FFFFFF",
+          color: accent ? "#8FC1FF" : "#FFFFFF",
         }}
       >
         {value}
@@ -728,8 +846,8 @@ function SaveIndicator({ state }) {
         fontSize: 11,
         padding: "4px 10px",
         borderRadius: 20,
-        background: state === "error" ? "#5A2B22" : "#3E5A3E",
-        color: "#F5F0E8",
+        background: state === "error" ? "#5A2B22" : "#154A46",
+        color: "#EAF1FA",
         display: "flex",
         alignItems: "center",
         gap: 4,
@@ -754,9 +872,11 @@ function TabBar({ tab, setTab, counts, role }) {
           { id: "solicitacoes", label: "Solicitações", badge: counts.pendentes },
         ]
       : [
+          { id: "gestorhome", label: "Início" },
           { id: "meusetor", label: "Meu setor" },
           { id: "vagasgestor", label: "Vagas do meu setor" },
           { id: "abrirvaga", label: "Abrir vaga" },
+          { id: "indicadoresgestor", label: "Indicadores" },
         ];
   return (
     <div style={{ background: C.surface, borderBottom: `1px solid ${C.line}` }}>
@@ -1177,22 +1297,64 @@ function Filters({ areas, areaFilter, setAreaFilter, search, setSearch }) {
 }
 
 // ---------- Organograma ----------
-function Organograma({ byArea, areas, expandedAreas, toggleArea }) {
+function buildAreaTree(rows) {
+  const byId = {};
+  rows.forEach((r) => {
+    byId[r.id] = { ...r, children: [] };
+  });
+  const roots = [];
+  rows.forEach((r) => {
+    const node = byId[r.id];
+    if (r.reportaPara && byId[r.reportaPara]) {
+      byId[r.reportaPara].children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+  return roots;
+}
+
+function isDescendant(allRows, ancestorId, candidateId) {
+  const directChildren = allRows.filter((r) => r.reportaPara === ancestorId);
+  for (const c of directChildren) {
+    if (c.id === candidateId) return true;
+    if (isDescendant(allRows, c.id, candidateId)) return true;
+  }
+  return false;
+}
+
+function Organograma({ byArea, areas, expandedAreas, toggleArea, updateRow }) {
   const diretoria = byArea["Diretoria"] || [];
   const otherAreas = areas.filter((a) => a !== "Diretoria");
+  const allRows = useMemo(() => Object.values(byArea).flat(), [byArea]);
+
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    const draggedId = Number(e.dataTransfer.getData("text/plain"));
+    if (!draggedId || draggedId === targetId) return;
+    if (isDescendant(allRows, draggedId, targetId)) return; // evita ciclo
+    updateRow(draggedId, "reportaPara", targetId);
+  };
+
+  const handleDropRoot = (e) => {
+    e.preventDefault();
+    const draggedId = Number(e.dataTransfer.getData("text/plain"));
+    if (!draggedId) return;
+    updateRow(draggedId, "reportaPara", "");
+  };
 
   return (
     <div>
       <div style={{ fontSize: 12.5, color: C.slate, marginBottom: 16, maxWidth: 640 }}>
-        Estrutura por área e função. Áreas com subgrupos (ex: Manutenção → Elétrica, Mecânica, PCM…) respondem
-        ao mesmo coordenador — os subgrupos aparecem destacados dentro do card ao expandir. Clique numa área
-        para expandir as funções. Caixas laranja indicam posições com vaga em aberto.
+        Arraste uma função e solte em cima de outra pra definir quem reporta pra quem. Solte na faixa
+        "soltar aqui para tirar do chefe" pra deixar a função no topo da área. Caixas laranja indicam
+        vaga em aberto.
       </div>
 
       {/* Diretoria row */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", marginBottom: 22 }}>
         {diretoria.map((r) => (
-          <OrgBox key={r.id} row={r} top />
+          <OrgBox key={r.id} row={r} top onDrop={(e) => handleDrop(e, r.id)} />
         ))}
       </div>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 22 }}>
@@ -1200,11 +1362,12 @@ function Organograma({ byArea, areas, expandedAreas, toggleArea }) {
       </div>
 
       {/* Area cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
         {otherAreas.map((area) => {
           const rows = byArea[area];
           const abertas = rows.reduce((s, r) => s + vagasAbertas(r), 0);
           const expanded = !!expandedAreas[area];
+          const tree = buildAreaTree(rows);
           return (
             <div key={area} style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 8, boxShadow: "0 1px 2px rgba(42,36,28,0.05), 0 2px 8px rgba(42,36,28,0.06)", overflow: "hidden", borderTop: `3px solid ${abertas > 0 ? C.signal : C.woodDark}` }}>
               <button
@@ -1229,35 +1392,15 @@ function Organograma({ byArea, areas, expandedAreas, toggleArea }) {
               </button>
               {expanded && (
                 <div style={{ borderTop: `1px solid ${C.line}` }}>
-                  {rows.filter((r) => !r.subarea).map((r) => (
-                    <FuncaoRow key={r.id} row={r} />
-                  ))}
-                  {Object.entries(
-                    rows.reduce((acc, r) => {
-                      if (!r.subarea) return acc;
-                      if (!acc[r.subarea]) acc[r.subarea] = [];
-                      acc[r.subarea].push(r);
-                      return acc;
-                    }, {})
-                  ).map(([sub, subRows]) => (
-                    <div key={sub}>
-                      <div
-                        style={{
-                          padding: "6px 12px",
-                          fontSize: 10.5,
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.04em",
-                          color: C.wood,
-                          background: C.bg,
-                        }}
-                      >
-                        {sub} <span style={{ fontWeight: 400, color: C.slateLight, textTransform: "none" }}>· mesmo coordenador de {area}</span>
-                      </div>
-                      {subRows.map((r) => (
-                        <FuncaoRow key={r.id} row={r} />
-                      ))}
-                    </div>
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDropRoot}
+                    style={{ padding: "4px 12px", fontSize: 10, color: C.slateLight, fontStyle: "italic", borderBottom: `1px dashed ${C.line}` }}
+                  >
+                    soltar aqui para tirar do chefe
+                  </div>
+                  {tree.map((node) => (
+                    <TreeNode key={node.id} node={node} depth={0} onDrop={handleDrop} />
                   ))}
                 </div>
               )}
@@ -1269,13 +1412,67 @@ function Organograma({ byArea, areas, expandedAreas, toggleArea }) {
   );
 }
 
-function OrgBox({ row, top }) {
+function TreeNode({ node, depth, onDrop }) {
+  const [expanded, setExpanded] = useState(true);
+  const abertas = vagasAbertas(node);
+  const hasChildren = node.children && node.children.length > 0;
+
+  return (
+    <div>
+      <div
+        draggable
+        onDragStart={(e) => e.dataTransfer.setData("text/plain", String(node.id))}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => onDrop(e, node.id)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "7px 12px",
+          paddingLeft: 12 + depth * 16,
+          borderBottom: `1px solid ${C.bg}`,
+          background: abertas > 0 ? C.signalBg : "transparent",
+          cursor: "grab",
+        }}
+      >
+        {hasChildren ? (
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", color: C.slateLight }}
+          >
+            {expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+          </button>
+        ) : (
+          <span style={{ width: 13, display: "inline-block" }} />
+        )}
+        <div style={{ fontSize: 12, flex: 1 }}>{node.funcao}</div>
+        <div style={{ fontFamily: F.mono, fontSize: 11, color: C.slateLight, whiteSpace: "nowrap", marginLeft: 8 }}>
+          {node.lotadas + node.terceiro}/{node.autorizadas}
+        </div>
+        {abertas > 0 && (
+          <div style={{ fontFamily: F.mono, fontWeight: 700, fontSize: 11.5, color: C.signal, marginLeft: 8, minWidth: 14, textAlign: "right" }}>{abertas}</div>
+        )}
+      </div>
+      {hasChildren && expanded && (
+        <div style={{ borderLeft: `2px solid ${C.line}`, marginLeft: 18 + depth * 16 }}>
+          {node.children.map((child) => (
+            <TreeNode key={child.id} node={child} depth={depth + 1} onDrop={onDrop} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OrgBox({ row, top, onDrop }) {
   const abertas = vagasAbertas(row);
   return (
     <div
+      onDragOver={(e) => onDrop && e.preventDefault()}
+      onDrop={onDrop}
       style={{
         background: top ? C.woodDark : C.surface,
-        color: top ? "#F5F0E8" : C.ink,
+        color: top ? "#EAF1FA" : C.ink,
         border: `1px solid ${top ? C.woodDark : C.line}`,
         borderRadius: 6,
         padding: "10px 14px",
@@ -1303,30 +1500,6 @@ function OrgBox({ row, top }) {
         >
           {abertas}
         </div>
-      )}
-    </div>
-  );
-}
-
-function FuncaoRow({ row }) {
-  const abertas = vagasAbertas(row);
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "7px 12px",
-        borderBottom: `1px solid ${C.bg}`,
-        background: abertas > 0 ? C.signalBg : "transparent",
-      }}
-    >
-      <div style={{ fontSize: 12, flex: 1 }}>{row.funcao}</div>
-      <div style={{ fontFamily: F.mono, fontSize: 11, color: C.slateLight, whiteSpace: "nowrap", marginLeft: 8 }}>
-        {row.lotadas + row.terceiro}/{row.autorizadas}
-      </div>
-      {abertas > 0 && (
-        <div style={{ fontFamily: F.mono, fontWeight: 700, fontSize: 11.5, color: C.signal, marginLeft: 8, minWidth: 14, textAlign: "right" }}>{abertas}</div>
       )}
     </div>
   );
@@ -1529,7 +1702,132 @@ const miniInputStyle = {
   fontFamily: F.mono,
 };
 
+function FuncaoRow({ row }) {
+  const abertas = vagasAbertas(row);
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "7px 12px",
+        borderBottom: `1px solid ${C.bg}`,
+        background: abertas > 0 ? C.signalBg : "transparent",
+      }}
+    >
+      <div style={{ fontSize: 12, flex: 1 }}>{row.funcao}</div>
+      <div style={{ fontFamily: F.mono, fontSize: 11, color: C.slateLight, whiteSpace: "nowrap", marginLeft: 8 }}>
+        {row.lotadas + row.terceiro}/{row.autorizadas}
+      </div>
+      {abertas > 0 && (
+        <div style={{ fontFamily: F.mono, fontWeight: 700, fontSize: 11.5, color: C.signal, marginLeft: 8, minWidth: 14, textAlign: "right" }}>{abertas}</div>
+      )}
+    </div>
+  );
+}
+
 // ---------- Gestor: meu setor ----------
+// ---------- Gestor: tela inicial (quadros) ----------
+function GestorHome({ area, setTab, vagasCount }) {
+  const cards = [
+    {
+      id: "meusetor",
+      icon: Users,
+      title: "Meu setor",
+      desc: "Veja o quadro de posições e a ocupação do seu time.",
+    },
+    {
+      id: "vagasgestor",
+      icon: Briefcase,
+      title: "Vagas do meu setor",
+      desc: "Acompanhe o status das vagas em processo seletivo.",
+      badge: vagasCount > 0 ? vagasCount : null,
+    },
+    {
+      id: "abrirvaga",
+      icon: FilePlus2,
+      title: "Abrir vaga",
+      desc: "Solicite uma reposição ou um aumento de quadro.",
+    },
+    {
+      id: "indicadoresgestor",
+      icon: BarChart3,
+      title: "Indicadores",
+      desc: "Tempo de fechamento, entrevistas e recrutamento do seu setor.",
+    },
+  ];
+
+  return (
+    <div>
+      <div style={{ marginBottom: 22 }}>
+        <div style={{ fontFamily: F.display, fontWeight: 700, fontSize: 20, color: C.ink }}>Olá! O que você quer fazer hoje?</div>
+        <div style={{ fontSize: 13, color: C.slate, marginTop: 4 }}>
+          Setor selecionado: <strong style={{ color: C.ink }}>{area}</strong>
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+        {cards.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => setTab(c.id)}
+            className="qlt-card-btn"
+            style={{
+              textAlign: "left",
+              background: C.surface,
+              border: `1px solid ${C.line}`,
+              borderRadius: 12,
+              boxShadow: "0 1px 2px rgba(42,36,28,0.05), 0 2px 8px rgba(42,36,28,0.06)",
+              padding: 20,
+              cursor: "pointer",
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            {c.badge && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  background: C.signal,
+                  color: "#fff",
+                  borderRadius: 20,
+                  fontSize: 11,
+                  fontFamily: F.mono,
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                }}
+              >
+                {c.badge}
+              </span>
+            )}
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                background: C.bg,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <c.icon size={20} color={C.wood} />
+            </div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: C.ink }}>{c.title}</div>
+            <div style={{ fontSize: 12.5, color: C.slate, lineHeight: 1.4 }}>{c.desc}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: C.signal, fontWeight: 600, marginTop: 4 }}>
+              Acessar <ArrowRight size={13} />
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MeuSetor({ area, rows }) {
   const aut = rows.reduce((s, r) => s + r.autorizadas, 0);
   const ocu = rows.reduce((s, r) => s + r.lotadas + r.terceiro, 0);
@@ -1552,7 +1850,7 @@ function MeuSetor({ area, rows }) {
 }
 
 // ---------- Gestor: vagas do meu setor ----------
-function VagasGestor({ rows, updateRow }) {
+function VagasGestor({ rows }) {
   if (rows.length === 0) {
     return (
       <div style={{ textAlign: "center", padding: "60px 20px", color: C.slateLight }}>
@@ -1564,7 +1862,7 @@ function VagasGestor({ rows, updateRow }) {
   return (
     <div>
       <div style={{ fontSize: 12, color: C.slate, marginBottom: 10 }}>
-        Você pode acompanhar e atualizar o status do processo seletivo dessas vagas.
+        Acompanhamento do processo seletivo — o status é atualizado pelo RH.
       </div>
       <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 8, boxShadow: "0 1px 2px rgba(42,36,28,0.05), 0 2px 8px rgba(42,36,28,0.06)", overflow: "hidden" }}>
         {rows.map((r, i) => (
@@ -1597,26 +1895,18 @@ function VagasGestor({ rows, updateRow }) {
             >
               {vagasAbertas(r)} vaga{vagasAbertas(r) > 1 ? "s" : ""}
             </div>
-            <select
-              value={r.status || ""}
-              onChange={(e) => updateRow(r.id, "status", e.target.value)}
+            <div
               style={{
                 padding: "6px 10px",
                 borderRadius: 6,
-                border: `1px solid ${C.line}`,
                 fontSize: 12.5,
                 background: r.status ? C.mossBg : C.bg,
                 color: r.status ? C.moss : C.slateLight,
                 fontWeight: 600,
               }}
             >
-              <option value="">Definir status…</option>
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              {r.status || "Aguardando RH definir status"}
+            </div>
           </div>
         ))}
       </div>
@@ -1625,17 +1915,23 @@ function VagasGestor({ rows, updateRow }) {
 }
 
 // ---------- Gestor: abrir vaga ----------
-function AbrirVaga({ area, rows, requests, submitRequest, gestorNome }) {
+function AbrirVaga({ area, rows, requests, submitRequest, gestorNome, setGestorNome }) {
   const [funcaoSel, setFuncaoSel] = useState("");
   const [funcaoNova, setFuncaoNova] = useState("");
   const [usarNova, setUsarNova] = useState(false);
   const [tipo, setTipo] = useState(TIPO_SOLICITACAO[0]);
+  const [colaboradorSubstituido, setColaboradorSubstituido] = useState("");
   const [justificativa, setJustificativa] = useState("");
   const [dataAbertura, setDataAbertura] = useState("");
   const [confirmado, setConfirmado] = useState(false);
 
+  const isReposicao = tipo === TIPO_SOLICITACAO[0];
   const funcaoFinal = usarNova ? funcaoNova.trim() : funcaoSel;
-  const podeEnviar = funcaoFinal && justificativa.trim().length > 4 && dataAbertura;
+  const podeEnviar =
+    gestorNome.trim() &&
+    funcaoFinal &&
+    dataAbertura &&
+    (isReposicao ? colaboradorSubstituido.trim() : justificativa.trim().length > 4);
 
   const enviar = () => {
     if (!podeEnviar) return;
@@ -1643,7 +1939,8 @@ function AbrirVaga({ area, rows, requests, submitRequest, gestorNome }) {
       area,
       funcao: funcaoFinal,
       tipo,
-      justificativa: justificativa.trim(),
+      colaboradorSubstituido: isReposicao ? colaboradorSubstituido.trim() : "",
+      justificativa: isReposicao ? "" : justificativa.trim(),
       solicitante: gestorNome.trim(),
       dataAbertura,
     });
@@ -1651,6 +1948,7 @@ function AbrirVaga({ area, rows, requests, submitRequest, gestorNome }) {
     setFuncaoSel("");
     setFuncaoNova("");
     setUsarNova(false);
+    setColaboradorSubstituido("");
     setJustificativa("");
     setDataAbertura("");
     setTimeout(() => setConfirmado(false), 2500);
@@ -1660,6 +1958,10 @@ function AbrirVaga({ area, rows, requests, submitRequest, gestorNome }) {
     <div style={{ maxWidth: 560 }}>
       <SectionTitle title={`Solicitar abertura de vaga — ${area}`} />
       <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 8, boxShadow: "0 1px 2px rgba(42,36,28,0.05), 0 2px 8px rgba(42,36,28,0.06)", padding: 18 }}>
+        <Field label="Nome do gestor">
+          <input value={gestorNome} onChange={(e) => setGestorNome(e.target.value)} placeholder="Seu nome" style={inputStyle} />
+        </Field>
+
         <Field label="Função">
           {!usarNova ? (
             <select
@@ -1704,15 +2006,26 @@ function AbrirVaga({ area, rows, requests, submitRequest, gestorNome }) {
           />
         </Field>
 
-        <Field label="Justificativa">
-          <textarea
-            value={justificativa}
-            onChange={(e) => setJustificativa(e.target.value)}
-            placeholder="Explique o motivo da abertura…"
-            rows={3}
-            style={{ ...inputStyle, resize: "vertical", fontFamily: F.body }}
-          />
-        </Field>
+        {isReposicao ? (
+          <Field label="Nome do colaborador a ser substituído">
+            <input
+              value={colaboradorSubstituido}
+              onChange={(e) => setColaboradorSubstituido(e.target.value)}
+              placeholder="Nome de quem saiu da posição"
+              style={inputStyle}
+            />
+          </Field>
+        ) : (
+          <Field label="Justificativa">
+            <textarea
+              value={justificativa}
+              onChange={(e) => setJustificativa(e.target.value)}
+              placeholder="Explique o motivo do aumento de quadro…"
+              rows={3}
+              style={{ ...inputStyle, resize: "vertical", fontFamily: F.body }}
+            />
+          </Field>
+        )}
 
         <button
           onClick={enviar}
@@ -1745,6 +2058,7 @@ function AbrirVaga({ area, rows, requests, submitRequest, gestorNome }) {
                 <div key={r.id} style={{ padding: "10px 16px", borderBottom: i < arr.length - 1 ? `1px solid ${C.line}` : "none" }}>
                   <div style={{ fontWeight: 600, fontSize: 13 }}>{r.funcao}</div>
                   <div style={{ fontSize: 11.5, color: C.slateLight, marginTop: 1 }}>{r.tipo}</div>
+                  {r.colaboradorSubstituido && <div style={{ fontSize: 11.5, color: C.slateLight, marginTop: 1 }}>substitui: {r.colaboradorSubstituido}</div>}
                   <StatusBadge status={r.status} />
                 </div>
               ))}
@@ -1823,7 +2137,9 @@ function Solicitacoes({ requests, resolveRequest }) {
                   {r.tipo}
                   {r.solicitante ? ` · solicitado por ${r.solicitante}` : ""}
                 </div>
-                <div style={{ fontSize: 12, color: C.ink, marginTop: 4, fontStyle: "italic" }}>"{r.justificativa}"</div>
+                <div style={{ fontSize: 12, color: C.ink, marginTop: 4, fontStyle: "italic" }}>
+                  {r.colaboradorSubstituido ? `substitui: ${r.colaboradorSubstituido}` : `"${r.justificativa}"`}
+                </div>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button
@@ -1957,7 +2273,7 @@ function Indicadores({ vagasLog }) {
     background: C.woodDark,
     border: "none",
     borderRadius: 6,
-    color: "#F5F0E8",
+    color: "#EAF1FA",
     fontSize: 12,
     fontFamily: F.body,
   };
