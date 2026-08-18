@@ -41,6 +41,7 @@ function exportBackupToExcel(data, vagasLog, requests) {
     Terceiro: r.terceiro,
     "Vagas em aberto": vagasAbertas(r),
     Motivo: r.motivo || "",
+    Observação: r.observacaoQuadro || "",
     Ativo: r.ativo === false ? "Não" : "Sim",
   }));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(quadroRows), "Quadro de Lotação");
@@ -95,7 +96,7 @@ function ocupacaoPct(rows) {
 export default function QuadroLotacao() {
   const [data, setData] = useState(SEED_DATA);
   const [ready, setReady] = useState(false);
-  const [tab, setTab] = useState("indicadores");
+  const [tab, setTab] = useState("adminhome");
   const [search, setSearch] = useState("");
   const [areaFilter, setAreaFilter] = useState("Todas");
   const [editingCell, setEditingCell] = useState(null);
@@ -357,9 +358,9 @@ export default function QuadroLotacao() {
   };
 
   useEffect(() => {
-    const adminTabs = ["dashboard", "lotacao", "organograma", "vagas", "indicadores", "solicitacoes"];
+    const adminTabs = ["adminhome", "dashboard", "lotacao", "organograma", "vagas", "indicadores", "solicitacoes"];
     const gestorTabs = ["gestorhome", "meusetor", "vagasgestor", "abrirvaga", "indicadoresgestor"];
-    if (role === "admin" && !adminTabs.includes(tab)) setTab("indicadores");
+    if (role === "admin" && !adminTabs.includes(tab)) setTab("adminhome");
     if (role === "gestor" && !gestorTabs.includes(tab)) setTab("gestorhome");
   }, [role]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -456,11 +457,15 @@ export default function QuadroLotacao() {
         logoutAdmin={logoutAdmin}
         onExport={() => exportBackupToExcel(data, vagasLog, requests)}
       />
-      {!(role === "gestor" && (!gestorArea || tab === "gestorhome")) && (
+      {!((role === "gestor" && (!gestorArea || tab === "gestorhome")) || (role === "admin" && tab === "adminhome")) && (
         <TabBar tab={tab} setTab={setTab} counts={{ vagas: vagasAtivasCount, areas: areas.length, pendentes: pendingCount }} role={role} />
       )}
 
       <div style={styles.content}>
+        {role === "admin" && tab === "adminhome" && (
+          <AdminHome setTab={setTab} vagasCount={vagasAtivasCount} pendentesCount={pendingCount} />
+        )}
+
         {role === "admin" && tab === "dashboard" && <Dashboard totals={totals} byArea={byArea} />}
 
         {role === "admin" && tab === "lotacao" && (
@@ -864,6 +869,7 @@ function TabBar({ tab, setTab, counts, role }) {
   const tabs =
     role === "admin"
       ? [
+          { id: "adminhome", label: "Início" },
           { id: "dashboard", label: "Visão geral" },
           { id: "lotacao", label: "Quadro de lotação" },
           { id: "organograma", label: "Organograma" },
@@ -1128,7 +1134,7 @@ function LotacaoTable({ areas, areaFilter, setAreaFilter, search, setSearch, fil
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "10px 0" }}>
         <div style={{ fontSize: 12, color: C.slate }}>
-          {filtered.length} posições ativas{showEncerradas ? ` · ${encerradas.length} encerradas exibidas` : ""} · clique em qualquer célula (Área, Subárea, Função, Lotadas, Afastados, Terceiro, Motivo) para editar
+          {filtered.length} posições ativas{showEncerradas ? ` · ${encerradas.length} encerradas exibidas` : ""} · clique em qualquer célula (Área, Subárea, Função, Lotadas, Afastados, Terceiro, Motivo, Observação) para editar
         </div>
         <label style={{ fontSize: 12, color: C.slate, display: "flex", alignItems: "center", gap: 6, cursor: "pointer", whiteSpace: "nowrap" }}>
           <input type="checkbox" checked={showEncerradas} onChange={(e) => setShowEncerradas(e.target.checked)} />
@@ -1140,7 +1146,7 @@ function LotacaoTable({ areas, areaFilter, setAreaFilter, search, setSearch, fil
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ background: C.bg, textAlign: "left" }}>
-              {["Área", "Subárea", "Função", "Autorizadas", "Lotadas", "Afastados", "Terceiro", "Vagas", "Motivo", ""].map((h) => (
+              {["Área", "Subárea", "Função", "Autorizadas", "Lotadas", "Afastados", "Terceiro", "Vagas", "Motivo", "Observação", ""].map((h) => (
                 <th key={h} style={{ padding: "9px 12px", fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.04em", color: C.slate, borderBottom: `1px solid ${C.line}`, whiteSpace: "nowrap" }}>
                   {h}
                 </th>
@@ -1168,6 +1174,7 @@ function LotacaoTable({ areas, areaFilter, setAreaFilter, search, setSearch, fil
                     )}
                   </td>
                   <EditableCell row={r} field="motivo" editingCell={editingCell} setEditingCell={setEditingCell} updateRow={updateRow} type="text" placeholder="—" />
+                  <EditableCell row={r} field="observacaoQuadro" editingCell={editingCell} setEditingCell={setEditingCell} updateRow={updateRow} type="text" placeholder="—" />
                   <td style={{ padding: "8px 12px", textAlign: "center" }}>
                     {inativa ? (
                       <button
@@ -1728,6 +1735,118 @@ function FuncaoRow({ row }) {
 
 // ---------- Gestor: meu setor ----------
 // ---------- Gestor: tela inicial (quadros) ----------
+// ---------- Admin: tela inicial (quadros) ----------
+function AdminHome({ setTab, vagasCount, pendentesCount }) {
+  const cards = [
+    {
+      id: "dashboard",
+      icon: LayoutGrid,
+      title: "Visão geral",
+      desc: "Ocupação, posições sem colaborador e resumo por área.",
+    },
+    {
+      id: "lotacao",
+      icon: Users,
+      title: "Quadro de lotação",
+      desc: "Edite cargos, áreas e a lotação de cada função.",
+    },
+    {
+      id: "organograma",
+      icon: TrendingUp,
+      title: "Organograma",
+      desc: "Monte a árvore de quem reporta pra quem, arrastando as funções.",
+    },
+    {
+      id: "vagas",
+      icon: Briefcase,
+      title: "Vagas em aberto",
+      desc: "Acompanhe cada processo seletivo em andamento.",
+      badge: vagasCount > 0 ? vagasCount : null,
+    },
+    {
+      id: "indicadores",
+      icon: BarChart3,
+      title: "Indicadores",
+      desc: "Tempo de fechamento, entrevistas e recrutamento da empresa toda.",
+    },
+    {
+      id: "solicitacoes",
+      icon: FilePlus2,
+      title: "Solicitações",
+      desc: "Aprove ou recuse pedidos de abertura de vaga dos gestores.",
+      badge: pendentesCount > 0 ? pendentesCount : null,
+    },
+  ];
+
+  return (
+    <div>
+      <div style={{ marginBottom: 22 }}>
+        <div style={{ fontFamily: F.display, fontWeight: 700, fontSize: 20, color: C.ink }}>Painel do RH</div>
+        <div style={{ fontSize: 13, color: C.slate, marginTop: 4 }}>Escolha o que você quer acessar.</div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+        {cards.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => setTab(c.id)}
+            className="qlt-card-btn"
+            style={{
+              textAlign: "left",
+              background: C.surface,
+              border: `1px solid ${C.line}`,
+              borderRadius: 12,
+              boxShadow: "0 1px 2px rgba(42,36,28,0.05), 0 2px 8px rgba(42,36,28,0.06)",
+              padding: 20,
+              cursor: "pointer",
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            {c.badge && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: 14,
+                  right: 14,
+                  background: C.signal,
+                  color: "#fff",
+                  borderRadius: 20,
+                  fontSize: 11,
+                  fontFamily: F.mono,
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                }}
+              >
+                {c.badge}
+              </span>
+            )}
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                background: C.bg,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <c.icon size={20} color={C.wood} />
+            </div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: C.ink }}>{c.title}</div>
+            <div style={{ fontSize: 12.5, color: C.slate, lineHeight: 1.4 }}>{c.desc}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: C.signal, fontWeight: 600, marginTop: 4 }}>
+              Acessar <ArrowRight size={13} />
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function GestorHome({ area, setTab, vagasCount }) {
   const cards = [
     {
