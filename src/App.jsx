@@ -759,7 +759,10 @@ function Header({
 
 function BrandBlock() {
   const [attempt, setAttempt] = useState(0); // 0 = .png, 1 = .svg, 2 = sem imagem (usa tipografia)
-  const sources = ["logo-sudati.png", "logo-sudati.svg"];
+  const sources = [
+  import.meta.env.BASE_URL + "logo-sudati.png",
+  import.meta.env.BASE_URL + "logo-sudati.svg"
+];
 
   if (attempt < sources.length) {
     return (
