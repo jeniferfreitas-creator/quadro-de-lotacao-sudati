@@ -1,3 +1,4 @@
+import logoSudati from './assets/logo-sudati.png';
 import { useState, useEffect, useMemo } from "react";
 import { Search, Building2, Users, Briefcase, ChevronDown, ChevronRight, X, Check, TrendingUp, TrendingDown, LayoutGrid, FilePlus2, BarChart3, ArrowRight, Download } from "lucide-react";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
@@ -760,7 +761,7 @@ function Header({
 function BrandBlock() {
   const [attempt, setAttempt] = useState(0); // 0 = .png, 1 = .svg, 2 = sem imagem (usa tipografia)
   const sources = [
-  import.meta.env.BASE_URL + "logo-sudati.png",
+  import.meta.env.BASE_URL + "logo-sudati.png.png",
   import.meta.env.BASE_URL + "logo-sudati.svg"
 ];
 
