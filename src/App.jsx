@@ -536,20 +536,20 @@ export default function QuadroLotacao() {
 
 // ---------- design tokens ----------
 const C = {
-  bg: "#EFF3F8",
+  bg: "#F3F5F6",
   surface: "#FFFFFF",
-  ink: "#16232F",
-  wood: "#2E5C82",
-  woodDark: "#16324A",
-  slate: "#4E6478",
-  slateLight: "#8598AC",
-  signal: "#1D6FD1",
-  signalBg: "#E1EDFB",
-  moss: "#0F8A87",
-  mossBg: "#E1F3F1",
-  line: "#D9E2EC",
-  amber: "#5B6FA8",
-  amberBg: "#E7E9F7",
+  ink: "#232A2F",
+  wood: "#576978",
+  woodDark: "#232A2F",
+  slate: "#576978",
+  slateLight: "#8B99A3",
+  signal: "#4B83AD",
+  signalBg: "#E8F1F7",
+  moss: "#4B8A6F",
+  mossBg: "#E7F3EC",
+  line: "#DCE1E4",
+  amber: "#B7862E",
+  amberBg: "#F7EFDC",
 };
 const F = {
   display: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif",
@@ -622,7 +622,7 @@ function Header({
     <div
       style={{
         background: C.woodDark,
-        color: "#EAF1FA",
+        color: "#F3F5F6",
         padding: "18px 24px",
         borderBottom: `4px solid ${C.signal}`,
         boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
@@ -630,16 +630,8 @@ function Header({
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <LogoMark />
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#7FA5C9" }}>
-              Sudati MDF
-            </div>
-            <div style={{ fontFamily: F.display, fontWeight: 700, fontSize: 19, letterSpacing: "-0.01em", lineHeight: 1.15 }}>
-              Portal de Gestão de Pessoas
-            </div>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <BrandBlock />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <StatChip label="Ocupação" value={`${totals.pct}%`} />
@@ -654,9 +646,9 @@ function Header({
                 gap: 6,
                 padding: "7px 12px",
                 borderRadius: 20,
-                border: "1px solid #2E4A64",
+                border: "1px solid #3E4A52",
                 background: "transparent",
-                color: "#EAF1FA",
+                color: "#F3F5F6",
                 fontSize: 12.5,
                 fontWeight: 600,
                 cursor: "pointer",
@@ -674,7 +666,7 @@ function Header({
         {role === "admin" && (
           <button
             onClick={logoutAdmin}
-            style={{ padding: "5px 12px", borderRadius: 20, border: "1px solid #2E4A64", background: "transparent", color: "#9FB6CE", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
+            style={{ padding: "5px 12px", borderRadius: 20, border: "1px solid #3E4A52", background: "transparent", color: "#A8B4BB", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
           >
             Sair
           </button>
@@ -687,9 +679,9 @@ function Header({
               style={{
                 padding: "5px 10px",
                 borderRadius: 20,
-                border: "1px solid #2E4A64",
-                background: "#1E3A54",
-                color: "#EAF1FA",
+                border: "1px solid #3E4A52",
+                background: "#33404A",
+                color: "#F3F5F6",
                 fontSize: 12.5,
               }}
             >
@@ -765,41 +757,36 @@ function Header({
   );
 }
 
-function LogoMark() {
-  const [attempt, setAttempt] = useState(0); // 0 = .png, 1 = .svg, 2 = ícone padrão
+function BrandBlock() {
+  const [attempt, setAttempt] = useState(0); // 0 = .png, 1 = .svg, 2 = sem imagem (usa tipografia)
   const sources = ["/logo-sudati.png", "/logo-sudati.svg"];
 
-  if (attempt >= sources.length) {
+  if (attempt < sources.length) {
     return (
-      <div
-        style={{
-          width: 42,
-          height: 42,
-          borderRadius: 10,
-          background: C.signal,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="5" r="2.6" fill="#fff" />
-          <circle cx="5" cy="19" r="2.6" fill="#fff" />
-          <circle cx="19" cy="19" r="2.6" fill="#fff" />
-          <path d="M12 7.6V12M12 12L5 16.6M12 12L19 16.6" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <img
+          src={sources[attempt]}
+          alt="Sudati"
+          onError={() => setAttempt((a) => a + 1)}
+          style={{ height: 34, maxWidth: 180, objectFit: "contain", objectPosition: "left center" }}
+        />
+        <div style={{ fontSize: 11.5, color: "#A8B4BB", letterSpacing: "0.01em" }}>Portal de Gestão de Pessoas</div>
       </div>
     );
   }
 
   return (
-    <img
-      src={sources[attempt]}
-      alt="Sudati"
-      onError={() => setAttempt((a) => a + 1)}
-      style={{ width: 42, height: 42, borderRadius: 10, objectFit: "contain", flexShrink: 0 }}
-    />
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ width: 3, height: 32, background: C.signal, borderRadius: 2, flexShrink: 0 }} />
+      <div>
+        <div style={{ fontFamily: F.display, fontWeight: 800, fontSize: 21, letterSpacing: "0.02em", textTransform: "uppercase", lineHeight: 1 }}>
+          Sudati
+        </div>
+        <div style={{ fontSize: 11.5, color: "#A8B4BB", marginTop: 4, letterSpacing: "0.01em" }}>
+          Portal de Gestão de Pessoas
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -811,7 +798,7 @@ function RolePill({ active, onClick, label }) {
       style={{
         padding: "5px 12px",
         borderRadius: 20,
-        border: `1px solid ${active ? C.signal : "#2E4A64"}`,
+        border: `1px solid ${active ? C.signal : "#3E4A52"}`,
         background: active ? C.signal : "transparent",
         color: "#fff",
         fontSize: 12.5,
@@ -827,13 +814,13 @@ function RolePill({ active, onClick, label }) {
 function StatChip({ label, value, accent }) {
   return (
     <div style={{ textAlign: "right" }}>
-      <div style={{ fontSize: 10.5, color: "#9FB6CE", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
+      <div style={{ fontSize: 10.5, color: "#A8B4BB", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
       <div
         style={{
           fontFamily: F.mono,
           fontWeight: 700,
           fontSize: 20,
-          color: accent ? "#8FC1FF" : "#FFFFFF",
+          color: accent ? "#8FC4E8" : "#FFFFFF",
         }}
       >
         {value}
@@ -851,8 +838,8 @@ function SaveIndicator({ state }) {
         fontSize: 11,
         padding: "4px 10px",
         borderRadius: 20,
-        background: state === "error" ? "#5A2B22" : "#154A46",
-        color: "#EAF1FA",
+        background: state === "error" ? "#5A2B22" : "#2E4A3E",
+        color: "#F3F5F6",
         display: "flex",
         alignItems: "center",
         gap: 4,
@@ -1479,7 +1466,7 @@ function OrgBox({ row, top, onDrop }) {
       onDrop={onDrop}
       style={{
         background: top ? C.woodDark : C.surface,
-        color: top ? "#EAF1FA" : C.ink,
+        color: top ? "#F3F5F6" : C.ink,
         border: `1px solid ${top ? C.woodDark : C.line}`,
         borderRadius: 6,
         padding: "10px 14px",
@@ -2392,7 +2379,7 @@ function Indicadores({ vagasLog }) {
     background: C.woodDark,
     border: "none",
     borderRadius: 6,
-    color: "#EAF1FA",
+    color: "#F3F5F6",
     fontSize: 12,
     fontFamily: F.body,
   };
