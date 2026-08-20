@@ -1,4 +1,8 @@
-import logoSudati from './assets/logo-sudati.png';
+const sources = [
+  import.meta.env.BASE_URL + "logo-sudati.png.png",
+  import.meta.env.BASE_URL + "logo-sudati.svg"
+];
+import logoSudati from './assets.logo-sudati.png';
 import { useState, useEffect, useMemo } from "react";
 import { Search, Building2, Users, Briefcase, ChevronDown, ChevronRight, X, Check, TrendingUp, TrendingDown, LayoutGrid, FilePlus2, BarChart3, ArrowRight, Download } from "lucide-react";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
